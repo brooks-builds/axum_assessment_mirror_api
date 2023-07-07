@@ -1,5 +1,9 @@
 use eyre::Result;
-use rand::{rngs::ThreadRng, thread_rng, Rng};
+use rand::{
+    distributions::{Alphanumeric, DistString},
+    rngs::ThreadRng,
+    thread_rng, Rng,
+};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
@@ -7,18 +11,23 @@ use serde::{Deserialize, Serialize};
 async fn mirrors_what_is_passed_in() -> Result<()> {
     let mut rng = thread_rng();
     let random_json = RandomData::new(&mut rng);
-    let random_path_value = create_random_string(4, &mut rng);
+    let random_path_value = create_random_string(4, &mut rng).to_lowercase();
     let random_query_param = rng.gen::<i32>();
     let url = format!(
         "http://localhost:3000/{}?id={random_query_param}",
         &random_path_value
     );
+
+    dbg!(&url);
+
     let client = Client::new();
     let response = client.post(url).json(&random_json).send().await?;
     let status = response.status();
-    let response_data = response.json::<ResponseRandomData>().await?;
 
     assert_eq!(status, 200);
+
+    let response_data = response.json::<ResponseRandomData>().await?;
+
     assert_eq!(response_data.json, random_json);
     assert_eq!(response_data.path, random_path_value);
     assert_eq!(response_data.query, random_query_param);
@@ -43,13 +52,8 @@ impl RandomData {
     }
 }
 
-fn create_random_string(length: u16, rng: &mut ThreadRng) -> String {
-    let mut random_string = String::new();
-
-    for _ in 0..length {
-        let character = rng.gen::<char>();
-        random_string.push(character);
-    }
+fn create_random_string(length: usize, rng: &mut ThreadRng) -> String {
+    let random_string = Alphanumeric.sample_string(rng, length);
 
     random_string
 }
