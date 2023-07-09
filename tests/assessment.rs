@@ -18,8 +18,6 @@ async fn mirrors_what_is_passed_in() -> Result<()> {
         &random_path_value
     );
 
-    dbg!(&url);
-
     let client = Client::new();
     let response = client.post(url).json(&random_json).send().await?;
     let status = response.status();
@@ -30,7 +28,7 @@ async fn mirrors_what_is_passed_in() -> Result<()> {
 
     assert_eq!(response_data.json, random_json);
     assert_eq!(response_data.path, random_path_value);
-    assert_eq!(response_data.query, random_query_param);
+    assert_eq!(response_data.query.id, random_query_param);
 
     Ok(())
 }
@@ -53,14 +51,17 @@ impl RandomData {
 }
 
 fn create_random_string(length: usize, rng: &mut ThreadRng) -> String {
-    let random_string = Alphanumeric.sample_string(rng, length);
-
-    random_string
+    Alphanumeric.sample_string(rng, length)
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 struct ResponseRandomData {
     pub json: RandomData,
     pub path: String,
-    pub query: i32,
+    pub query: ResponseQuery,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+struct ResponseQuery {
+    pub id: i32,
 }

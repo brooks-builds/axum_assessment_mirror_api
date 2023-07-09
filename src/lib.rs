@@ -10,7 +10,7 @@ mod router;
 pub async fn run(config: Config) -> Result<()> {
     tracing_subscriber::fmt::init();
 
-    let router = create_router(&config).await?;
+    let router = create_router().await?;
     let address = SocketAddr::from((config.address, config.port));
 
     axum::Server::bind(&address)
